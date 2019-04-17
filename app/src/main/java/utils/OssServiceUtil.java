@@ -1,5 +1,6 @@
 package utils;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.alibaba.sdk.android.oss.ClientConfiguration;
@@ -25,6 +26,7 @@ public class OssServiceUtil {
         this.accessKeySecret = accessKeySecret;
         this.endPoint = endPoint;
         this.context = context;
+
     }
 
     public void initOSSClient(){

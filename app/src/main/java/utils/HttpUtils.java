@@ -3,6 +3,9 @@ package utils;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
+
+import com.example.myapplication.MainActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,16 +40,7 @@ public class HttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if(response.isSuccessful()){
-                    String responBody = response.body().string();
-                    try {
-                        JSONObject json = new JSONObject(responBody);
-                        bean = new OssConfigBean(json.getString("AccessKeyId"),json.getString("AccessKeySecret"),json.getString("SecurityToken"));
 
-                    } catch (JSONException e) {
-
-                    }
-                }
             }
         });
         return this.bean;

@@ -1,5 +1,7 @@
 package zust.yyj.entity;
 
+import com.google.gson.Gson;
+
 public class User {
     private Integer id;
     private String name;
@@ -21,7 +23,6 @@ public class User {
         this.deleted = 0;
         this.phone = phone;
     }
-
     @Override
     public String toString() {
         return "User [ id = "+ id +" ,name = "+ name +" ,birthday = "+ birthday +" ,realName = "+ realName +" ,age = "+ age +" ,pwd = "+ pwd +" ,phone = "+ phone +" ,deleted = "+ deleted +" ]";

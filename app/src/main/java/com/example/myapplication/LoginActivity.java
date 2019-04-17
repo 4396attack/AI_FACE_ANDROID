@@ -41,6 +41,8 @@ import okhttp3.Response;
 import utils.BaseUrlUtils;
 import utils.Configure;
 import utils.ErrorCodes;
+import utils.JsonTools;
+import zust.yyj.entity.User;
 
 public class LoginActivity extends AppCompatActivity {
     private Configure configure;
@@ -97,13 +99,18 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * 用OKHttp发送post请求
      */
+//    private void enqueue(){
+//        configure.setToken("123");
+//                        Intent intent = new Intent(LoginActivity.this,IndexActivity.class);
+//                        startActivity(intent);
+//    }
     private void enqueue(){
         FormBody.Builder formBody = new FormBody.Builder();
                 formBody.add("phone",_emailText.getText().toString())
                 .add("pwd",_passwordText.getText().toString());
 
         Request request = new Request.Builder()
-                .url(BaseUrlUtils.ipAddr + BaseUrlUtils.getLoginUrl)
+                .url(BaseUrlUtils.ipPCAddr + BaseUrlUtils.getLoginUrl)
                 .post(formBody.build())
                 .build();
         client.newCall(request).enqueue(new Callback() {
@@ -119,10 +126,16 @@ public class LoginActivity extends AppCompatActivity {
                     JSONObject json = new JSONObject(respBody);
                     int code = json.getInt("code");
                     String msg = json.getString("msg");
+                    Log.d("res",respBody);
+                    String userInfo = json.getString("obj");
+                    User user = new Gson().fromJson(userInfo, User.class);
                     if(ErrorCodes.SUCCESS.equals(new Integer(code))){
                         //跳转到个人主页
-                        configure.setToken("123");
-                        onLoginFailed(msg);
+
+                        configure.setToken(user.getId() + "");
+                        configure.setLoginUser(user);
+                        Intent intent = new Intent(LoginActivity.this,IndexActivity.class);
+                        startActivity(intent);
                     }else {
                         onLoginFailed(msg);
                     }
@@ -132,6 +145,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
     public void login() {
         Log.d(TAG, "Login");
 
