@@ -134,7 +134,7 @@ public class LoginActivity extends AppCompatActivity {
 
                         configure.setToken(user.getId() + "");
                         configure.setLoginUser(user);
-                        Intent intent = new Intent(LoginActivity.this,IndexActivity.class);
+                        Intent intent = new Intent(LoginActivity.this,AlbumActivity.class);
                         startActivity(intent);
                     }else {
                         onLoginFailed(msg);

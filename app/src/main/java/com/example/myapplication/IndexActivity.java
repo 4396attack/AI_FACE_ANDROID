@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,6 +13,7 @@ import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,8 +27,10 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -52,6 +56,7 @@ import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
 import com.google.gson.Gson;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -70,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import butterknife.BindView;
@@ -91,12 +97,15 @@ import utils.ErrorCodes;
 import utils.OSSPathTools;
 import zust.yyj.adapter.FaceAdapter;
 import zust.yyj.entity.FaceDetial;
+import zust.yyj.entity.FacePhoto;
 import zust.yyj.entity.User;
 
-public class IndexActivity extends AppCompatActivity {
+public class IndexActivity extends Activity {
     private Configure configure;
     private OSS oss;
     private OkHttpClient client;
+    private Integer _photoId;
+    private Integer _faceNum;
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_SIGNUP = 0;
     private HashMap<String, String> stringHashMap;
@@ -123,6 +132,10 @@ public class IndexActivity extends AppCompatActivity {
     ProgressBar _wait_pro;
     @BindView(R.id.btn_face)
     Button _btn_face;
+    @BindView(R.id.list1)
+    RecyclerView _rview;
+    @BindView(R.id.result_text)
+    EditText _result_text;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -134,6 +147,40 @@ public class IndexActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
         }
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.zhihu_toolbar_menu);
+        toolbar.setNavigationIcon(R.mipmap.ic_drawer_home);
+        toolbar.setTitle(R.string.upload_page);
+        toolbar.setTitleTextColor(getResources().getColor(android.R.color.white));
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_search:
+                        Toast.makeText(IndexActivity.this, "找我", Toast.LENGTH_SHORT).show();
+                        Intent intent2 = new Intent(IndexActivity.this,FindMeActivity.class);
+                        startActivity(intent2);
+                        break;
+                    case R.id.action_info:
+                        Toast.makeText(IndexActivity.this, "主页", Toast.LENGTH_SHORT).show();
+                        Intent intent1 = new Intent(IndexActivity.this,UserInfoActivity.class);
+                        startActivity(intent1);
+                        break;
+                    case R.id.action_logout:
+                        Toast.makeText(IndexActivity.this, "已退出", Toast.LENGTH_SHORT).show();
+                        configure.setLoginUser(null);
+                        configure.setToken("");
+                        Intent intent = new Intent(IndexActivity.this,LoginActivity.class);
+                        startActivity(intent);
+                        break;
+//                    case R.id.action_notification:
+//                        Intent intent2 = new Intent(IndexActivity.this,IndexActivity.class);
+//                        startActivity(intent2);
+////                        break;
+                }
+                return true;
+            }
+        });
         configure = (Configure) getApplication();
         String userId = configure.getToken();
         User loginUser = configure.getLoginUser();
@@ -165,7 +212,7 @@ public class IndexActivity extends AppCompatActivity {
         _btn_face.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFaceDetail();
+                checkPosStatus();
             }
         });
     }
@@ -358,6 +405,9 @@ public class IndexActivity extends AppCompatActivity {
             Log.d("path",saveCreamePhoto);
             _chooseImg.setImageBitmap(BitmapFactory.decodeFile(picturePath));
             _btn_doup.setEnabled(true);
+            _rview.setVisibility(View.GONE);
+            _btn_face.setVisibility(View.GONE);
+            _result_text.setVisibility(View.GONE);
             // String picturePath contains the path of selected Image
         }
 
@@ -371,6 +421,10 @@ public class IndexActivity extends AppCompatActivity {
                     mCurrentPhotoPath = imageFile.getAbsolutePath();
                     _chooseImg.setImageBitmap(bitmap);
                     _btn_doup.setEnabled(true);
+                    _rview.setVisibility(View.GONE);
+                    _btn_face.setVisibility(View.GONE);
+                    _result_text.setText("");
+                    _result_text.setVisibility(View.GONE);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -474,7 +528,7 @@ public class IndexActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(PutObjectRequest request, PutObjectResult result) {
 //                    Looper.prepare();
-//                    _pro_upload.setVisibility(View.INVISIBLE);
+//                    _pro_upload.setVisibility(View.GONE);
 //                    btnStat(true);
                     Log.d("PutObject", "UploadSuccess");
                     Log.d("ETag", result.getETag());
@@ -484,8 +538,9 @@ public class IndexActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             Log.d("t","已在主线程中？" + Process.myTid());
-//                            _pro_upload.setVisibility(View.INVISIBLE);
+//                            _pro_upload.setVisibility(View.GONE);
                             _wait_pro.setVisibility(View.VISIBLE);
+                            _photoId = photoId;
                             confrimUpload(photoId);
 //                            _btn_doup.setEnabled(false);
 //                            Toast.makeText(getBaseContext(), "上传成功", Toast.LENGTH_LONG).show();
@@ -496,7 +551,7 @@ public class IndexActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(PutObjectRequest request, ClientException clientException, ServiceException serviceException) {
-//                    _pro_upload.setVisibility(View.INVISIBLE);
+//                    _pro_upload.setVisibility(View.GONE);
 //                    btnStat(true);
                     // 请求异常
                     if (clientException != null) {
@@ -515,7 +570,7 @@ public class IndexActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             Log.d("t","已在主线程中？" + Process.myTid());
-                            _pro_upload.setVisibility(View.INVISIBLE);
+                            _pro_upload.setVisibility(View.GONE);
                             _btn_doup.setEnabled(false);
                             Toast.makeText(getBaseContext(), "上传失败", Toast.LENGTH_LONG).show();
 
@@ -528,7 +583,7 @@ public class IndexActivity extends AppCompatActivity {
         }
 
         //向后台发送请求，检测OSS上是否有图片，并进行人脸检索与数据库的更新
-        private void confrimUpload(Integer photoId){
+        private void confrimUpload(final Integer photoId){
             FormBody.Builder formBody = new FormBody.Builder();
             formBody.add("userId",configure.getToken())
                     .add("id",photoId + "");
@@ -551,12 +606,19 @@ public class IndexActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             _uploadButton.setEnabled(true);
-                            _pro_upload.setVisibility(View.INVISIBLE);
-                            _wait_pro.setVisibility(View.INVISIBLE);
+                            _pro_upload.setVisibility(View.GONE);
+                            _wait_pro.setVisibility(View.GONE);
+                            _btn_face.setVisibility(View.VISIBLE);
+                            _btn_face.setEnabled(true);
+                            faceList.clear();
                             try {
                                 JSONObject json = new JSONObject(resp);
                                 if(ErrorCodes.SUCCESS.equals(json.getInt("code"))){
                                     Toast.makeText(getBaseContext(), "上传成功", Toast.LENGTH_LONG).show();
+                                    /**
+                                     * 发送人脸定位请求
+                                     */
+                                    sendCutMsg();
                                 }else{
                                     Toast.makeText(getBaseContext(), json.getString("msg"), Toast.LENGTH_LONG).show();
                                 }
@@ -569,18 +631,152 @@ public class IndexActivity extends AppCompatActivity {
                 }
             });
         }
+
+    /**
+     * 发送人脸定位监测请求
+     */
+    private void sendCutMsg(){
+        FormBody.Builder formBody = new FormBody.Builder();
+        formBody.add("photoId",_photoId + "");
+        Request request = new Request.Builder()
+                .url(BaseUrlUtils.ipPCAddr + BaseUrlUtils.getSendPosMsgUrl)
+                .post(formBody.build())
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                //此时后台已经在处理中，我们要轮询去请求服务器，看人脸的定位是否已经处理完成
+                Log.d("time","到这了吗？");
+//                checkPosStatus();
+            }
+        });
+    }
+    /**
+     * 轮询请求，判断人脸定位的处理状态
+     */
+    private void checkPosStatus(){
+        _btn_face.setEnabled(false);
+        _wait_pro.setVisibility(View.VISIBLE);
+        Log.d("status","开始轮询");
+            FormBody.Builder formBody = new FormBody.Builder();
+            formBody.add("photoId",_photoId + "");
+            Request request = new Request.Builder()
+                    .url(BaseUrlUtils.ipPCAddr + BaseUrlUtils.getCheckStatusUrl)
+                    .post(formBody.build())
+                    .build();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String resp = response.body().string();
+                    Log.d("reps",resp);
+                    try {
+                        JSONObject json = new JSONObject(resp);
+                        // status = 1 或者 = -1 都是定位已经完成，不需要再去轮询请求了
+                        if(ErrorCodes.SUCCESS.equals(json.getInt("code"))){
+                            if(new Integer(1).equals(json.getJSONObject("obj").getInt("status"))){
+                                //发送请求更新UI
+                                getAllFaceInfo(_photoId);
+                            }else if (new Integer(-1).equals(json.getJSONObject("obj").getInt("status"))){
+                                Log.d("pos","无检测人脸");
+                                Handler mainHandler = new Handler(Looper.getMainLooper());
+                                mainHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d("t","已在主线程？" + Process.myTid());
+                                        FaceAdapter faceAdapter = new FaceAdapter(faceList);
+                                        _wait_pro.setVisibility(View.GONE);
+//                                        _rview.setVisibility(View.VISIBLE);
+                                        _result_text.setVisibility(View.VISIBLE);
+                                        _result_text.setText("未检测到人脸信息");
+//                                        LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+//                                        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+//                                        _rview.setLayoutManager(layoutManager);
+//                                        _rview.setAdapter(faceAdapter);
+                                    }
+                                });
+
+                            }else {
+                                //可能处理还没完成，继续请求
+                                checkPosStatus();;
+                            }
+                        }
+                    } catch (JSONException e) {
+                        Log.e("err","数据异常" + e);
+                    }
+                }
+            });
+        }
+/**
+ * 获取所有人脸位置信息
+ *
+ */
+private void getAllFaceInfo(Integer photoId){
+    if(_photoId == null){
+        return;
+    }
+    FormBody.Builder formBody = new FormBody.Builder();
+    formBody.add("photoId",photoId + "");
+    Request request = new Request.Builder()
+            .url(BaseUrlUtils.ipPCAddr + BaseUrlUtils.getAllFacesPosUrl)
+            .post(formBody.build())
+            .build();
+    client.newCall(request).enqueue(new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            String resp = response.body().string();
+            try {
+                JSONObject json = new JSONObject(resp);
+                if(ErrorCodes.SUCCESS.equals(json.getInt("code"))){
+                    JSONObject obj = json.getJSONObject("obj");
+                    _faceNum = obj.getInt("num");//人脸数量
+                    if (_faceNum > 0){
+                        JSONArray faces = obj.getJSONArray("faces");
+                        for(int i =0 ;i<faces.length();i++){
+                            JSONObject face = faces.getJSONObject(i);
+                            FaceDetial fd = new FaceDetial(face.getInt("id"),face.getInt("photoId"),face.getInt("userId"));
+                            faceList.add(fd);
+                        }
+                        showFaceDetail();
+                    }
+                }else{
+                    Log.d("result",json.getString("msg"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    });
+}
+    /**
+     * 更新UI
+     */
     private void showFaceDetail() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    String urlStr = oss.presignConstrainedObjectURL(OSSPathTools.ORIGIN_BUCKET, OSSPathTools.prePhotoPath(3, 19), 30 * 60);
-                    Log.d("url",urlStr);
-                    URL url = new URL(urlStr);
-                    Bitmap bitmap = BitmapFactory.decodeStream(url.openStream());
-                    FaceDetial fa = new FaceDetial(1,2,3);
-                    fa.setBitmap(bitmap);
-                    faceList.add(fa);
+                    for (FaceDetial fd : faceList){
+                        String urlStr = oss.presignConstrainedObjectURL(OSSPathTools.DETAIL_BUCKET,OSSPathTools.getFaceDetailPath(fd.getUserId(),fd.getPhotoId(),fd.getId()),30*60);
+                        Log.d("url",urlStr);
+                        URL url = new URL(urlStr);
+                        Bitmap bitmap = BitmapFactory.decodeStream(url.openStream());
+                        fd.setBitmap(bitmap);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -591,11 +787,14 @@ public class IndexActivity extends AppCompatActivity {
                     public void run() {
                         Log.d("t","已在主线程？" + Process.myTid());
                         FaceAdapter faceAdapter = new FaceAdapter(faceList);
-                        RecyclerView view = findViewById(R.id.list1);
+                        _wait_pro.setVisibility(View.GONE);
+                        _rview.setVisibility(View.VISIBLE);
+                        _result_text.setVisibility(View.VISIBLE);
+                        _result_text.setText("一共检测到" +_faceNum + "张人脸");
                         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
                         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-                        view.setLayoutManager(layoutManager);
-                        view.setAdapter(faceAdapter);
+                        _rview.setLayoutManager(layoutManager);
+                        _rview.setAdapter(faceAdapter);
                     }
                 });
             }

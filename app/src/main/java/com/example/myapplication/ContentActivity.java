@@ -122,7 +122,7 @@ public class ContentActivity extends Activity {
     }
     public void dismiss(View view){
         ProgressBar _pro = (ProgressBar) findViewById(R.id.h_p) ;
-        _pro.setVisibility(View.INVISIBLE);
+        _pro.setVisibility(View.GONE);
 //        setProgressBarVisibility(false);
 //        setProgressBarIndeterminateVisibility(false);
     }

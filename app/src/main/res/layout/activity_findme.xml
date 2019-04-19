@@ -3,13 +3,13 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true"
-    android:background="@drawable/find_me_bg"
+    android:background="@drawable/bg_index"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fitsSystemWindows="true">
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+<LinearLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
@@ -21,42 +21,16 @@
         </android.support.v7.widget.Toolbar>
 
         <ImageView
-            android:id="@+id/imgView"
+            android:id="@+id/mache_imgView"
             android:layout_width="wrap_content"
             android:layout_height="240dp"
-            android:layout_marginTop="10dp"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="24dp"
-            android:src="@drawable/add_img" />
-
-        <EditText
-            android:id="@+id/result_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:editable="false"
-            android:visibility="gone" />
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/list1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
-        <android.support.v7.widget.AppCompatButton
-            android:id="@+id/btn_face"
-            android:layout_width="80dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            android:text="人脸定位"
-            android:visibility="gone" />
-
+            android:src="@drawable/image_fill" />
         <!--  Email Label -->
         <ProgressBar
-            android:id="@+id/wait_pro"
+            android:id="@+id/mache_wait_pro"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_gravity="center"
@@ -64,7 +38,7 @@
             android:visibility="gone" />
 
         <ProgressBar
-            android:id="@+id/probar_upload"
+            android:id="@+id/mache_probar_upload"
             style="@android:style/Widget.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,24 +46,45 @@
             android:visibility="gone" />
 
         <android.support.v7.widget.AppCompatButton
-            android:id="@+id/btn_upload"
-            android:layout_width="match_parent"
+            android:id="@+id/mache_upload"
+            android:layout_width="200dp"
+            android:layout_gravity="center"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="10dp"
             android:padding="12dp"
-            android:text="choose" />
+            android:text="选取" />
 
         <android.support.v7.widget.AppCompatButton
-            android:id="@+id/btn_doup"
-            android:layout_width="match_parent"
+            android:id="@+id/mache_doup"
+            android:layout_width="200dp"
+            android:layout_gravity="center"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="10dp"
             android:enabled="false"
             android:padding="12dp"
-            android:text="upload"
+            android:text="确认"
             android:textAlignment="center" />
+
+        <EditText
+            android:id="@+id/mache_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:editable="false"
+            android:visibility="invisible" />
+
+        <zust.yyj.cusView.MyGridView
+            android:id="@+id/photo_mache"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnWidth="90dip"
+            android:gravity="center"
+            android:numColumns="auto_fit"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="10dip"
+            android:visibility="gone"></zust.yyj.cusView.MyGridView>
 
     </LinearLayout>
 </ScrollView>

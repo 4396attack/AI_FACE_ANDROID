@@ -38,6 +38,9 @@
         <activity android:name=".SignupActivity" android:theme="@style/AppTheme.Dark" />
         <activity android:name=".IndexActivity" android:theme="@style/AppTheme" />
         <activity android:name=".ContentActivity" android:theme="@style/Theme.AppCompat.CompactMenu" />
+        <activity android:name=".AlbumActivity" android:theme="@style/AppTheme" />
+        <activity android:name=".UserInfoActivity" android:theme="@style/AppTheme" />
+        <activity android:name=".FindMeActivity" android:theme="@style/AppTheme" />
     </application>
 
 </manifest>
